@@ -1,4 +1,5 @@
 import discord
+import config
 from random import randint
 from textblob import TextBlob
 #from time import sleep
@@ -11,12 +12,12 @@ negative = []
 
 def get_greet():
     file = open("greet.txt")
-    global first_move
+    global greet
     greet = file.read().splitlines()
     file.close()
 
-async def print_first_move(message):
-    global first_move
+async def print_greet(message):
+    global greet
     await message.channel.send(greet[randint(0,len(greet)-1)])
 
 def get_negative_message():
@@ -48,17 +49,16 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    if message.author == client.user:
+    if message.author == client.user or message.channel.id != 974351951812788274:
         return
 
     if message.content.startswith('$hello'):
-        await print_first_move(message)
-
-    if "seraphine" in message.content and TextBlob(message.content).sentiment.polarity >= 0:
+        await greet(message)
+    if "seraphine" in message.content.lower() and TextBlob(message.content).sentiment.polarity >= 0:
         await print_positive_message(message)
-    else:
+    elif "seraphine" in message.content.lower():
         await print_negative_message(message)
 
-
-client.run('')
+if __name__ == "__main__":
+    client.run(config.token)
 
