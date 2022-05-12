@@ -34,6 +34,5 @@ async def on_message(message):
         await message.channel.send("uwu not now <@" + str(message.author.id) + ">")
 
 
-get_first_move()
 client.run('')
 
