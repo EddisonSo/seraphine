@@ -1,64 +1,88 @@
-import discord
+from discord.ext import commands
 import config
 from random import randint
 from textblob import TextBlob
-#from time import sleep
 
-client = discord.Client()
+# from time import sleep
+
+bot = commands.Bot("$")
+
+phrases = {
+    "greet": [],
+    "positive": [],
+    "negative": []
+}
 
 greet = []
 positive = []
 negative = []
 
-def get_greet():
-    file = open("greet.txt")
+
+def init_phrases():
     global greet
+    global negative
+    global positive
+    global phrases
+
+    file = open("greet.txt")
     greet = file.read().splitlines()
     file.close()
 
-async def print_greet(message):
-    global greet
-    await message.channel.send(greet[randint(0,len(greet)-1)])
-
-def get_negative_message():
     file = open("negative.txt")
-    global negative
     negative = file.read().splitlines()
     file.close()
 
-async def print_negative_message(message):
-    global negative
-    await message.channel.send(negative[randint(0,len(negative)-1)])
-
-def get_positive_message():
     file = open("positive.txt")
-    global positive
     positive = file.read().splitlines()
     file.close()
 
+
+async def print_greet(ctx):
+    global greet
+    await ctx.channel.send(greet[randint(0, len(greet) - 1)])
+
+
+async def print_negative_message(message):
+    global negative
+    await message.channel.send(negative[randint(0, len(negative) - 1)])
+
+
 async def print_positive_message(message):
     global positive
-    await message.channel.send(positive[randint(0,len(positive)-1)])
+    await message.channel.send(positive[randint(0, len(positive) - 1)])
 
-@client.event
+
+async def print_error(message):
+    await message.channel.send("uwu I don't seem to understand that >.<")
+
+
+@bot.event
 async def on_ready():
-    print('We have logged in as {0.user}'.format(client))
-    get_greet()
-    get_negative_message()
-    get_positive_message()
+    print('We have logged in as {0.user}'.format(bot))
+    init_phrases()
 
-@client.event
+
+@bot.event
 async def on_message(message):
-    if message.author == client.user or message.channel.id != 974351951812788274:
+    if message.author == bot.user or message.channel.id != 974351951812788274:
         return
-
-    if message.content.startswith('$hello'):
-        await greet(message)
-    if "seraphine" in message.content.lower() and TextBlob(message.content).sentiment.polarity >= 0:
+    if "seraphine" in message.content.lower() and TextBlob(message.content).sentiment.polarity >= 0 and not message.content.startswith("$"):
         await print_positive_message(message)
-    elif "seraphine" in message.content.lower():
+    elif "seraphine" in message.content.lower() and not message.content.startswith("$"):
         await print_negative_message(message)
 
-if __name__ == "__main__":
-    client.run(config.token)
+    await bot.process_commands(message)
 
+#Bot command error handling
+@bot.event
+async def on_command_error(ctx, error):
+    await ctx.channel.send("uwu I don't seem to understand that >.<")
+
+#Bot commands
+@bot.command()
+async def hello(ctx):
+    await print_greet(ctx)
+
+
+if __name__ == "__main__":
+    bot.run(config.token)
