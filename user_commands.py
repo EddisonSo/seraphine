@@ -62,8 +62,12 @@ class user_commands(commands.Cog):
 
     @commands.command()
     async def reload(self, ctx):
+        if ctx.message.author.id != 144362248440250368:
+            await ctx.channel.send("Nope :3")
+            return
         self.bot.reload_extension("user_commands")
         self.bot.reload_extension("user_message")
+        self.bot.reload_extension("admin_commands")
         print("Seraphine reloaded >.<")
 
 def setup(bot):

@@ -3,11 +3,6 @@ import config
 
 bot = commands.Bot("$")
 
-channels = {
-    "personal": 805571869994254357,
-    "ask-seraqueen": 974351951812788274
-}
-
 @bot.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(bot))
@@ -22,5 +17,6 @@ async def on_command_error(ctx, error):
 if __name__ == "__main__":
     bot.load_extension("user_commands")
     bot.load_extension("user_message")
+    bot.load_extension("admin_commands")
     bot.run(config.token)
 

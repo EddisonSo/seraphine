@@ -1,9 +1,5 @@
-from discord import File
 from discord.ext import commands
 from random import randint
-from os import listdir
-import requests
-import shutil
 from textblob import TextBlob
 
 class user_message(commands.Cog):
@@ -23,8 +19,8 @@ class user_message(commands.Cog):
         self.phrases["positive"] = file.read().splitlines()
         file.close()
 
-    def check_invalid_message(self, message):
-        return message.author == self.bot.user
+    def check_valid_message(self, message):
+        return message.author != self.bot.user and str(message.channel.type) != "private"
 
     async def is_command(self, message):
         return str(message.channel.type) == "private"
@@ -45,7 +41,7 @@ class user_message(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if self.check_invalid_message(message):
+        if not self.check_valid_message(message):
             return
         if await self.is_command(message):
             return
