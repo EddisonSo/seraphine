@@ -1,7 +1,7 @@
 from discord.ext import commands
 import config
 
-bot = commands.Bot("$")
+bot = commands.Bot("$", case_insensitive=True)
 
 @bot.event
 async def on_ready():
