@@ -2,6 +2,7 @@ from discord.ext import commands
 from random import randint
 from textblob import TextBlob
 
+
 class user_message(commands.Cog):
     phrases = {}
     def __init__(self, bot):
@@ -41,13 +42,8 @@ class user_message(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.author.id == 195394141524328448:
-            await message.delete()
         if not self.check_valid_message(message):
             return
-        if await self.is_command(message):
-            return
         await self.handle_message(message)
-
 def setup(bot):
     bot.add_cog(user_message(bot))

@@ -5,24 +5,15 @@ from random import randint
 from os import listdir
 import requests
 import shutil
-from asyncio import sleep
+from asyncio import sleep, run
+import config
 
 
 class user_commands(commands.Cog):
     # Attributes
     phrases = {}
-    songs = {
-        "childhood dreams": "./sounds/Childhood Dreams.mp3",
-        "champ select": "./sounds/Seraphine_Select.ogg",
-        "pop/stars": "./sounds/POP_STARS.mp3",
-        "all the things she said": "./sounds/All The Things She Said.mp3",
-        "laugh": "./sounds/Seraphine_Original_Laugh_0.ogg",
-        "kiss": "./sounds/Seraphine_Original_Q_3.ogg",
-        "harmonize": "./sounds/Seraphine_Original_W_2.ogg",
-        "stuck": "./sounds/Seraphine_Original_Kill_0.ogg",
-        "not a fan": "./sounds/Seraphine_Original_Death_2.ogg",
-        "rebirth": "./sounds/rebirth.mp3"
-    }
+    songs = config.songs
+    curr_loop = False
 
 
     def __init__(self, bot):
@@ -40,6 +31,7 @@ class user_commands(commands.Cog):
         self.phrases["positive"] = file.read().splitlines()
         file.close()
 
+
     # Command helper functions
     async def print_greet(self, ctx):
         greets = self.phrases["greet"]
@@ -50,9 +42,11 @@ class user_commands(commands.Cog):
         numFile = len(files)
         await ctx.channel.send(file=File("./dirty/" + files[randint(0, numFile - 1)]))
 
-    async def play_audio(self, ctx, voice):
-        channel = ctx.message.author.voice.channel
+    async def play_next(self, ctx, voice):
+        if self.curr_loop:
+            await self.play_audio(ctx, voice)
 
+    async def play_audio(self, ctx, voice):
         song_req = ctx.message.content[6:]
         if song_req not in self.songs:
             await ctx.channel.send("uwu I appear to not know that song >.<")
@@ -65,10 +59,8 @@ class user_commands(commands.Cog):
         song = self.songs[song_req]
         source = FFmpegPCMAudio(executable="C:\FFmpeg/ffmpeg.exe", source=song)
 
-        voice.play(source)
-        voice.pause()
-        await sleep(1)
-        voice.resume()
+        voice.play(source, after=lambda x: run(self.play_next(ctx, voice)))
+
 
     def is_connected(self, voice):
         return voice and voice.is_connected()
@@ -139,6 +131,7 @@ class user_commands(commands.Cog):
 
     @commands.command()
     async def stop(self, ctx):
+        self.curr_loop = False
         if ctx.voice_client.is_playing():
             voice = get(self.bot.voice_clients, guild=ctx.guild)
             voice.stop()
@@ -153,6 +146,14 @@ class user_commands(commands.Cog):
         for song in self.songs.keys():
             songs += song + "\n"
         await ctx.channel.send(songs)
+
+    @commands.command()
+    async def loop(self, ctx):
+        self.curr_loop = not self.curr_loop
+        if self.curr_loop:
+            await ctx.channel.send("Currently Looping! uwu")
+        else:
+            await ctx.channel.send("Not Looping Anymore! uwu")
 
 
 def setup(bot):
