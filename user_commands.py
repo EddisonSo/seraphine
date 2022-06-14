@@ -1,4 +1,4 @@
-from discord import File, FFmpegPCMAudio
+from discord import File, FFmpegPCMAudio, ClientException
 from discord.ext import commands
 from discord.utils import get
 from random import randint
@@ -7,13 +7,14 @@ import requests
 import shutil
 from asyncio import sleep, run
 import config
-
+from queue import Queue
 
 class user_commands(commands.Cog):
     # Attributes
     phrases = {}
     songs = config.songs
     curr_loop = False
+    song_queue = Queue()
 
 
     def __init__(self, bot):
@@ -42,12 +43,21 @@ class user_commands(commands.Cog):
         numFile = len(files)
         await ctx.channel.send(file=File("./dirty/" + files[randint(0, numFile - 1)]))
 
-    async def play_next(self, ctx, voice):
+    async def play_next(self, ctx):
         if self.curr_loop:
-            await self.play_audio(ctx, voice)
+            await self.play_audio(ctx)
+        else:
+            self.song_queue.get()
+            if self.song_queue.empty():
+                return
 
-    async def play_audio(self, ctx, voice):
+
+    async def play_audio(self, ctx):
+        voice = get(self.bot.voice_clients, guild=ctx.guild)
+
         song_req = ctx.message.content[6:]
+        self.song_queue.put(song_req)
+
         if song_req not in self.songs:
             await ctx.channel.send("uwu I appear to not know that song >.<")
             return
@@ -59,10 +69,11 @@ class user_commands(commands.Cog):
         song = self.songs[song_req]
         source = FFmpegPCMAudio(executable="C:\FFmpeg/ffmpeg.exe", source=song)
 
-        voice.play(source, after=lambda x: run(self.play_next(ctx, voice)))
+        voice.play(source, after=lambda x: run(self.play_next(ctx)))
 
 
     def is_connected(self, voice):
+        print(voice and voice.is_connected())
         return voice and voice.is_connected()
 
     # Commands
@@ -109,19 +120,17 @@ class user_commands(commands.Cog):
 
         voice = get(self.bot.voice_clients, guild=ctx.guild)
 
-        if not self.is_connected(voice):
-            voice = await ctx.author.voice.channel.connect()
+        if voice is None:
+            await ctx.author.voice.channel.connect()
         else:
-            if ctx.voice_client.channel != ctx.author.voice.channel:
-                voice = get(self.bot.voice_clients, guild=ctx.guild)
-                voice.stop()
-                await ctx.voice_client.move_to(ctx.author.voice.channel)
+            await ctx.voice_client.move_to(ctx.author.voice.channel)
+            await sleep(0.7)
+
         if len(ctx.message.content) == 5:
             if self.bot.user in ctx.channel.members:
                 voice.resume()
             return
-
-        await self.play_audio(ctx, voice)
+        await self.play_audio(ctx)
 
     @commands.command()
     async def pause(self, ctx):
@@ -155,6 +164,13 @@ class user_commands(commands.Cog):
         else:
             await ctx.channel.send("Not Looping Anymore! uwu")
 
+    @commands.command()
+    async def lover(self, ctx):
+        await ctx.channel.send("My only lover is...\n<@144362248440250368> !!!")
+
+    @commands.command()
+    async def fact(self, ctx):
+        await ctx.channel.send("<@791904021161574420> is lowkey annoying and weird.")
 
 def setup(bot):
     bot.add_cog(user_commands(bot))
